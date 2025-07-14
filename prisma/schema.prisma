@@ -1,0 +1,72 @@
+// ---------- GENERATOR ----------
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------- DATASOURCE ----------
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS ----------
+enum CurrencyCode {
+  USD
+  EUR
+  MXN
+  GTQ
+}
+
+enum TrxType {
+  income
+  expense
+}
+
+// ---------- MODELS ----------
+model User {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  email              String        @unique
+  password           String
+  preferred_currency CurrencyCode  @default(USD)
+  tags               Tag[]
+  transactions       Transaction[]
+  created_at         DateTime      @default(now())
+}
+
+model Tag {
+  id          Int           @id @default(autoincrement())
+  name        String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  Transaction Transaction[]
+
+  @@unique([userId, name])
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  Transaction Transaction[]
+}
+
+model Transaction {
+  id          Int          @id @default(autoincrement())
+  type        TrxType
+  amount      Decimal      @db.Decimal(12, 2)
+  currency    CurrencyCode @default(USD)
+  date        DateTime     @default(now())
+  description String?
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+
+  tag   Tag? @relation(fields: [tagId], references: [id])
+  tagId Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
